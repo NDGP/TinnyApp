@@ -1,7 +1,7 @@
-app.set("view engine", "ejs") 
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
+app.set("view engine", "ejs") 
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -29,3 +29,13 @@ app.get("/set", (req, res) => {
   res.send(`a = ${a}`);
  });
  
+ app.get("/urls", (req, res) => {
+  const templateVars = { urls: urlDatabase };
+  res.render("urls_index", templateVars);
+});
+
+app.get("/urls/:shortURL", (req, res) => {
+  const templateVars = { shortURL: req.params.shortURL, longURL: req.params.url };
+  res.render("urls_show", templateVars);
+});
+
