@@ -11,6 +11,8 @@ let newUrl = Math.random().toString(36).substring(7);
 return newUrl;
 }
 
+generateRandomString()
+
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
@@ -52,6 +54,11 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console
-  res.send("Ok");         // Respond with 'Ok' (we will replace this)
+  console.log(req.body.longURL); 
+  let newURL = generateRandomString();
+  urlDatabase[newURL] = req.body.longURL;
+  console.log(urlDatabase)
+  res.redirect(`/urls/${newURL}`);
+   // Log the POST request body to the console
+   // Respond with 'Ok' (we will replace this)
 });
