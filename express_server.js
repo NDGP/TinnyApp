@@ -64,7 +64,10 @@ app.post("/urls", (req, res) => {
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  console.log(req.params)
+  //console.log(req.params)
+  if (urlDatabase[req.params.shortURL] === undefined){
+    return res.redirect("https://www.youtube.com/watch_popup?v=N9wsjroVlu8&t=16s")
+  }
   const longURL = urlDatabase[req.params.shortURL]
   res.redirect(longURL);
 });
