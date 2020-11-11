@@ -112,13 +112,27 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 // login and logout
 
+app.get("/login", (req, res) => {
+  const templateVars =  {error: undefined}
+  res.render("login", templateVars)
+})
+
 app.post("/login", (req, res) => {
-  
-  res.redirect("/urls")
+  //console.log(req.body.email)
+  for (let user in users){
+    if (users[user].email !== req.body.email || users[user].password !== req.body.password){
+      continue
+    }else if(users[user].email === req.body.email && users[user].password === req.body.password){
+      res.cookie("user_id", users[user].id)
+      return res.redirect("/urls")
+    }
+  }
+  const templateVars =  {error: "403 error : hmmmm try again"}
+  res.render("login", templateVars)
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('username', req.body.username)
+  res.clearCookie('user_id', req.body.id)
   res.redirect("/urls")
 });
 
