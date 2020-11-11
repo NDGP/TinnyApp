@@ -7,18 +7,34 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser())
 app.set("view engine", "ejs") 
 
+//user object 
+const users = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
+}
+
 // new url maker
 function generateRandomString() {
 let newUrl = Math.random().toString(36).substring(7);
 return newUrl;
 }
 
-generateRandomString()
+//url database
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
+
+//page gets, posts, listens
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -42,8 +58,7 @@ app.get("/set", (req, res) => {
  });
  
  app.get("/urls", (req, res) => {
-   //console.log(Object.keys(req))
-   console.log(req.cookies)
+  console.log(req.cookies)
   const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
   res.render("urls_index", templateVars);
 });
@@ -64,12 +79,9 @@ app.post("/urls", (req, res) => {
   urlDatabase[newURL] = req.body.longURL;
   console.log(urlDatabase.shortURL)
   res.redirect(`/urls/${newURL}`);
-   // Log the POST request body to the console
-   // Respond with 'Ok' (we will replace this)
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  //console.log(req.params)
   if (urlDatabase[req.params.shortURL] === undefined){
     return res.redirect("https://www.youtube.com/watch_popup?v=N9wsjroVlu8&t=16s")
   }
@@ -95,7 +107,16 @@ app.post("/login", (req, res) => {
   res.redirect("/urls")
 });
 
-app.post("/logout", (req, res) =>{
+app.post("/logout", (req, res) => {
   res.clearCookie('username', req.body.username)
   res.redirect("/urls")
-})
+});
+
+app.get("/register", (req, res) => {
+  console.log(req.body)
+  res.render("register")
+});
+
+app.post("/register", (req, res) => {
+  console.log(req.body)
+});
