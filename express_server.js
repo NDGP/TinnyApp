@@ -69,7 +69,6 @@ app.get("/set", (req, res) => {
   }else{
   const userURLdatabase = urlsForUser(userID)
   const templateVars = { urls: userURLdatabase, user: users[userID] };
-  console.log("this is the database", userURLdatabase)
   res.render("urls_index", templateVars);
   }
 });
@@ -163,12 +162,12 @@ app.get("/login", (req, res) => {
   res.render("login", templateVars)
 })
 
+
 app.post("/login", (req, res) => {
-  //console.log(req.body.email)
   for (let user in users){
-    if (users[user].email !== req.body.email || users[user].password !== req.body.password){
+    if (users[user].email !== req.body.email || !bcrypt.compareSync(req.body.password, users[user].password)){
       continue
-    }else if(users[user].email === req.body.email && users[user].password === req.body.password){
+    }else if(users[user].email === req.body.email && bcrypt.compareSync(req.body.password, users[user].password)){
       res.cookie("user_id", users[user].id)
       return res.redirect("/urls")
     }
@@ -202,10 +201,14 @@ app.post("/register", (req, res) => {
       return res.render("register", templateVars)
     }
   }
-  console.log(req.params)
+  const pass = req.body.password
+  const hashedPassword = bcrypt.hashSync(pass, 10);
+
+  console.log(req.body)
   let randomID = generateRandomString()
   req.body.id = randomID
-  users[randomID] = req.body
+  users[randomID] = { email: req.body.email, password: hashedPassword }
+  console.log(users)
   res.cookie("user_id", randomID )
   res.redirect("/urls")
 });
