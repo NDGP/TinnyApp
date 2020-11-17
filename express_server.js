@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
+const bcrypt = require('bcrypt');
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser())
 app.set("view engine", "ejs") 
@@ -30,8 +31,8 @@ return newUrl;
 //url database
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
+  i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
 };
 
 //page gets, posts, listens
@@ -56,37 +57,67 @@ app.get("/set", (req, res) => {
   const a = 1;
   res.send(`a = ${a}`);
  });
+
+ //URL url colection and new url
  
  app.get("/urls", (req, res) => {
   //console.log(req.cookies)
-  const templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]] };
+  const userID = req.cookies["user_id"]
+  if (!userID){
+    const templateVars = { user: ""};
+    res.render("urls_index", templateVars);
+  }else{
+  const userURLdatabase = urlsForUser(userID)
+  const templateVars = { urls: userURLdatabase, user: users[userID] };
+  console.log("this is the database", userURLdatabase)
   res.render("urls_index", templateVars);
-  //console.log()
+  }
 });
+
+const urlsForUser = (id) => {
+  const userURLdatabase = {};
+  for (let shortURL in urlDatabase) {
+  if (urlDatabase[shortURL].userID === id) {
+      userURLdatabase[shortURL] = urlDatabase[shortURL];
+    }
+  }
+  return userURLdatabase;
+}
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = { user: users[req.cookies["user_id"]] };
+  const userID = req.cookies["user_id"]
+  const templateVars = { user: users[userID] };
+  //console.log(req.cookie)
+  if(!userID){
+    res.redirect("/login")
+  }else{
   res.render("urls_new", templateVars);
+  }
 });
 
-//working here//////////
 
 app.get("/urls/:shortURL", (req, res) => {
+  const userID = req.cookies["user_id"]
   const templateVars = { 
     shortURL: req.params.shortURL, 
     longURL: req.params.url,  
-    user: users[req.cookies["user_id"]]
+    user: users[userID]
   };
 
+  if(!userID){
+    return res.redirect("/urls", templateVars)
+  }else{
   res.render("urls_show", templateVars);
-  console.log(templateVars.user)
+  //console.log(templateVars.user)
+  }
 });
 
+
 app.post("/urls", (req, res) => {
-  //console.log(req.body.longURL); 
+  console.log(req.body.longURL); 
   let newURL = generateRandomString();
-  urlDatabase[newURL] = req.body.longURL;
-  res.redirect(`/urls/${newURL}`);
+  urlDatabase[newURL]= {longURL : req.body.longURL, userID : req.cookies.user_id};
+  res.redirect(`/urls`);
 });
 
 app.get("/u/:shortURL", (req, res) => {
@@ -101,13 +132,28 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.post("/urls/:shortURL", (req, res) => {
   let shortURL = req.params.shortURL;
-  urlDatabase[shortURL] = req.body.longURL;
-  res.redirect("/urls")
+  const userID = req.cookies["user_id"]
+  if(!userID){
+    const templateVars = { user: users[userID] };
+    res.redirect("/urls", templateVars)
+  }else{
+  const templateVars = { user: users[userID] };
+  urlDatabase[shortURL] = {longURL : req.body.longURL, userID : req.cookies.user_id};
+  res.redirect("/urls", templateVars);
+  console.log(urlDatabase);
+  }
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  delete urlDatabase[req.params.shortURL]
-  res.redirect("/urls")
+    const userID = req.cookies["user_id"]
+    if(!userID) {
+      const templateVars = { user: users[userID] }
+      res.redirect("/urls", templateVars);
+    }else {
+      const templateVars = { user: users[userID] }
+      delete urlDatabase[req.params.shortURL]
+      res.redirect("/urls", templateVars);
+  }
 });
 
 // login and logout
@@ -147,21 +193,24 @@ app.post("/register", (req, res) => {
   //console.log(req.body)
   for (let user in users){
    // console.log("user log", users[user])
-  if(users[user].email === req.body.email){
-    const templateVars =  {error: "error coad 400 : email already exists"}
-    return res.render("register", templateVars)
+    if(users[user].email === req.body.email){
+      const templateVars =  {error: "error coad 400 : email already exists"}
+      return res.render("register", templateVars)
+    }
+    if(req.body.email === "" || req.body.password === ""){
+      const templateVars =  {error: "error coad 400 : all fields must be filled"}
+      return res.render("register", templateVars)
+    }
   }
-  if(req.body.email === "" || req.body.password === ""){
-    const templateVars =  {error: "error coad 400 : all fields must be filled"}
-    return res.render("register", templateVars)
-  }
-}
+  console.log(req.params)
   let randomID = generateRandomString()
   req.body.id = randomID
   users[randomID] = req.body
   res.cookie("user_id", randomID )
   res.redirect("/urls")
 });
+
+
 
 // const users = { 
 //   "userRandomID": {
