@@ -41,7 +41,7 @@ const urlDatabase = {
 //page gets, posts, listens
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  res.redirect("/urls");
 });
 
 app.listen(PORT, () => {
@@ -96,40 +96,49 @@ app.get("/urls/:shortURL", (req, res) => {
     longURL: req.params.url,  
     user: users[userID]
   };
-
+  let shortURL = req.params.shortURL
   if (!userID) {
     return res.redirect("/urls", templateVars);
-  } else {
+  } else if(!urlDatabase[shortURL]) {
+    return res.send("<html><body><b>Not a valid Short URL</b></body></html>\n");
+  }else{
     res.render("urls_show", templateVars);
-  
   }
 });
 
 // generating new short url for users input of long url
 
 app.post("/urls", (req, res) => {
+
   let newURL = generateRandomString();
-  urlDatabase[newURL] = {longURL : req.body.longURL, userID : req.session.user_id};
-  res.redirect(`/urls`);
+  urlDatabase[newURL] = {shortURL: newURL, longURL : req.body.longURL, userID : req.session.user_id};
+  res.redirect(urlDatabase[newURL].longURL);
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  if (urlDatabase[req.params.shortURL] === undefined) {
-    return res.redirect("https://www.youtube.com/watch_popup?v=N9wsjroVlu8&t=16s");
+  const templateVars = {urlDatabase: urlDatabase}
+  let shortURL = req.params.shortURL;
+  if (!urlDatabase[shortURL]) {
+    return res.send("<html><body><b>Not a valid Short URL</b></body></html>\n");
   }
-  const longURL = urlDatabase[req.params.shortURL];
-  res.redirect(longURL);
+  res.redirect(urlDatabase[shortURL].longURL);
 });
 
 //  edit and deleat urls from list
 
 app.post("/urls/:shortURL", (req, res) => {
-  let shortURL = req.params.shortURL;
+  console.log(req.params)
+
+  let shortUrl = req.params.shortURL;
   const userID = req.session.user_id;
   if (!userID) {
     res.redirect("/urls");
   } else {
-    urlDatabase[shortURL] = {longURL : req.body.longURL, userID : req.session.user_id};
+    urlDatabase[shortUrl] = {
+      shortURL : shortUrl, 
+      longURL : req.body.longURL, 
+      userID : req.session.user_id}
+      ;
     res.redirect("/urls");
   }
 });
